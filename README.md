@@ -24,6 +24,23 @@ Fork de [Vice-Tay](https://github.com/TaynanGT/Vice-Tay) (couche de compatibilit
   marche sur un clavier AZERTY. Voir « Commandes » plus bas.
 - **`scripts\fps-report.ps1`** : résume les fps d'une session à partir du log
   (`-More @{VICTORY_LOG_FILE='...'}`), pour comparer deux réglages.
+- **Repris de [Vilocity](https://github.com/voidopcode/vilocity)** (branche
+  `vilocity-port`, 2026-11-27) :
+  - **Pages physiques en sections de 2 MiB** (`VICTORY_SECTION_MB`, 0 = une section
+    par demande comme avant). Le titre demande ses 6,1 Go en un appel et les mappe
+    64 Ko à la fois ; une seule section Windows dont le verrou est tenu pendant la
+    reconstruction des grandes pages freinait chaque map/unmap en mouvement. Chez
+    Vilocity : 848 → 117 ms/s de mapping, 11-18 → 24-29 fps en se déplaçant
+    (d'après fxceless/victory-fork #1089 et #1274). Désactivé avec
+    `VICTORY_PORT_CONSTANTS=1`, qui veut le tas 32 bits dans une seule section.
+  - **Bibliothèque de pipelines remise à zéro** quand le traducteur ou le pilote
+    change (`host-pipelines.for` garde l'empreinte) ; sauvegardes espacées selon la
+    taille du fichier. Chez eux le fichier avait atteint 4,1 Go.
+  - **Deux corrections de shaders** (ScarlettPort/DexNom) : masque wave64 copié mot
+    par mot après un spill ; échantillonneur immédiat choisi par un phi.
+  - Non repris : la répartition sur deux dies (un seul sur le 7800X3D), la remise
+    des descripteurs par lots (ce fork a déjà 16 files par thread), la netteté FSR
+    (dépend de leur module de redirection vers la DLL FSR PC, absent ici).
 
 ## Jouer
 
