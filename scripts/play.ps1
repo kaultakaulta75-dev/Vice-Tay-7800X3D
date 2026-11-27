@@ -33,6 +33,12 @@ if ($Machine -eq 'auto') {
     # Use the existing vendor defaults. The 4070 / 7800X3D profile is explicit.
     $cards = @(Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue | ForEach-Object { $_.PNPDeviceID })
     $Machine = if ($cards -match 'VEN_10DE') { '4090' } else { '7900xtx' }
+    # An NVIDIA card with an 8-core CPU (16 threads or fewer, a Ryzen 7 7800X3D
+    # say) gets the 4070 / 7800X3D profile: the 4090's 12 + 8 + 6 workers are
+    # more than such a CPU has threads (7800X3D + RTX 4080, Series S, 1080p:
+    # 15.5 -> 21.9 fps median in the world with that profile).
+    $threads = (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Measure-Object NumberOfLogicalProcessors -Sum).Sum
+    if ($Machine -eq '4090' -and $threads -and $threads -le 16) { $Machine = '4070' }
 }
 if ($Machine -eq '7900xtx') {
     # i9-12900K, RX 7900 XTX, 64 GB: the page-mapping lock was fastest with one
@@ -57,7 +63,9 @@ if ($Machine -eq '7900xtx') {
     # minutes (the losses of runs 121-124 had the form on for every program).
     # Kept under -Safe too: without it those programs do not translate and
     # their draws are dropped, the picture -Safe is there to check.
-    $settings.VICTORY_WAVE_WIDE_ONLY = '6f225b641c5b0708,5dc3b25986622949,369cbe906ea72764,2cc4c197ee29e291'
+    # a10179ab7eda0dc3: a compute program first bound in the world on a
+    # 7800X3D / RTX 4080 PC; it did not translate without the form.
+    $settings.VICTORY_WAVE_WIDE_ONLY = '6f225b641c5b0708,5dc3b25986622949,369cbe906ea72764,2cc4c197ee29e291,a10179ab7eda0dc3'
 }
 if ($Machine -eq '4070') {
     # Ryzen 7 7800X3D: eight physical cores, versus the 4090 test PC's sixteen.

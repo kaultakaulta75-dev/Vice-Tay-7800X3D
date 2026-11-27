@@ -135,8 +135,9 @@ fn build() -> [u8; 32] {
             }
             bytes.push(0);
         }
-        // The list affects output only with the explicit global opt-in.
-        if std::env::var_os("VICTORY_WAVE_WIDE").is_some_and(|v| v == "1")
+        // The list affects output unless the global switch is off (`=0`): alone
+        // it turns the form on for the shaders it names.
+        if std::env::var_os("VICTORY_WAVE_WIDE").is_none_or(|v| v == "1")
             && let Some(list) = std::env::var_os("VICTORY_WAVE_WIDE_ONLY").filter(|v| !v.is_empty())
         {
             bytes.extend_from_slice(b"VICTORY_WAVE_WIDE_ONLY=");

@@ -1,3 +1,51 @@
+# Vice-Tay — profil 7800X3D
+
+Fork de [Vice-Tay](https://github.com/TaynanGT/Vice-Tay) (couche de compatibilité
+[VIctory](https://github.com/Marvisak/VIctory)), à jour avec Vice-Tay `123c4b7`
+(27 novembre 2026), réglé et mesuré sur un Ryzen 7 7800X3D + RTX 4080 + 32 Go de RAM.
+
+**Aucun fichier du jeu n'est inclus.** Il faut votre propre copie.
+
+## Ce que ce fork change
+
+- **Profil 7800X3D choisi automatiquement** : avec une carte NVIDIA et un processeur
+  de 16 threads ou moins, `play.ps1` prend le profil `-Machine 4070` (8 cœurs) au lieu
+  de celui du 16 cœurs, qui lançait plus de threads de travail que le CPU n'en a.
+  Mesuré en Series S 1080p : **15,5 → 21,9 fps** médian dans le monde, pire 10 %
+  13,5 → 18,3.
+- **La liste `VICTORY_WAVE_WIDE_ONLY` agit seule.** Dans Vice-Tay elle ne compte que
+  si `VICTORY_WAVE_WIDE=1` est aussi posé, ce que `play.ps1` ne fait pas : deux
+  shaders ne se traduisaient pas et leurs draws étaient abandonnés (têtes
+  invisibles, visages mal rendus). Ici la liste suffit, et `VICTORY_WAVE_WIDE=0`
+  la coupe toujours. Un cinquième shader (`a10179ab7eda0dc3`) y est ajouté.
+- **`scripts\fps-report.ps1`** : résume les fps d'une session à partir du log
+  (`-More @{VICTORY_LOG_FILE='...'}`), pour comparer deux réglages.
+
+## Jouer
+
+```powershell
+git clone https://github.com/kaultakaulta75-dev/Vice-Tay-7800X3D.git
+cd Vice-Tay-7800X3D
+copy victory.example.toml victory.toml      # puis indiquez vos chemins, hors de ce dossier
+cargo build --release --locked -p victory
+scripts\play.ps1 -Exe <votre game_scarlett_master.exe> -Console series-s -Build release
+```
+
+Le profil 8 cœurs est celui de Vice-Tay (`-Machine 4070`), aussi utilisé par
+[AnyXboxX](https://github.com/LooperSalty/AnyXboxX).
+
+## Limites connues
+
+Reflets de l'eau par blocs, quelques taches de couleur sur les visages, zones
+d'ombre trop sombres sans `-RayTracing` (qui coûte environ 5 fps). Ne réduisez pas
+`VICTORY_OUTPUT` en Series S : l'upscaler du jeu n'y accepte que 1920×1080.
+
+Licence GPL-3.0-or-later, comme VIctory.
+
+---
+
+*Ci-dessous, le README d'origine de Vice-Tay (en anglais).*
+
 # Vice-Tay
 
 Vice-Tay runs an Xbox Series title natively on Windows, from files you supply,

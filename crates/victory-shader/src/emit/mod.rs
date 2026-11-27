@@ -473,6 +473,11 @@ fn wave_wide_hash_matches(list: Option<&std::ffi::OsStr>, input: &[u8]) -> bool 
     list.split(',').any(|name| name.trim().eq_ignore_ascii_case(&hash[..16]))
 }
 
+/// A nonempty list that names this container (no list names none).
+fn wave_wide_listed(list: Option<&std::ffi::OsStr>, input: &[u8]) -> bool {
+    list.is_some_and(|l| !l.is_empty()) && wave_wide_hash_matches(list, input)
+}
+
 /// Emits a program whose earlier stages already ran.
 pub fn emit(
     c: &Container,
@@ -593,10 +598,14 @@ pub fn emit(
                 [0x58, 0x1d, 0xab, 0x2c, 0xd8, 0xbc, 0xf2, 0x2e, 0x5c, 0x96, 0x4b, 0x98, 0xe9, 0x03, 0x48, 0xd1]
                     | [0x24, 0x31, 0xbb, 0xe7, 0xdc, 0x15, 0x4a, 0xd7, 0x59, 0xd2, 0x0b, 0xc9, 0x54, 0x82, 0x9c, 0x1c]
             );
-        let wide_on = wide_option.as_ref().map_or(scene_kernel, |v| {
-            v == "1"
-                && wave_wide_hash_matches(std::env::var_os("VICTORY_WAVE_WIDE_ONLY").as_deref(), c.input)
-        });
+        // Without the global switch a nonempty list alone turns the form on for
+        // the shaders it names (`scripts/play.ps1` sets only the list: two of its
+        // four shaders did not translate and their draws were dropped).
+        let wide_list = std::env::var_os("VICTORY_WAVE_WIDE_ONLY");
+        let wide_on = wide_option.as_ref().map_or_else(
+            || scene_kernel || wave_wide_listed(wide_list.as_deref(), c.input),
+            |v| v == "1" && wave_wide_hash_matches(wide_list.as_deref(), c.input),
+        );
         // A single guest wave can iterate an active-lane loop until both host
         // halves have finished. The precise latch and convergence conditions
         // for the driver compute route are checked by widen().
@@ -1144,6 +1153,10 @@ mod tests {
         assert!(!super::wave_wide_hash_matches(Some(OsStr::new("invalid")), water));
         assert!(super::wave_wide_hash_matches(None, other));
         assert!(super::wave_wide_hash_matches(Some(OsStr::new("")), other));
+        assert!(super::wave_wide_listed(Some(OsStr::new(&list)), water));
+        assert!(!super::wave_wide_listed(Some(OsStr::new(&list)), other));
+        assert!(!super::wave_wide_listed(None, water));
+        assert!(!super::wave_wide_listed(Some(OsStr::new("")), water));
     }
 
     /// The LLVM text `dxc -dumpbin` prints for a DXIL container, when dxc
