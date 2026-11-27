@@ -65,12 +65,23 @@ fn shown() -> &'static AtomicBool {
     SHOWN.get_or_init(|| AtomicBool::new(asked()))
 }
 
-/// F3 was pressed since the last call, with one of our windows in front.
-fn pressed() -> bool {
-    static DOWN: AtomicBool = AtomicBool::new(false);
+/// Whether the key help is shown (F1; off at the start).
+fn help() -> &'static AtomicBool {
+    static HELP: AtomicBool = AtomicBool::new(false);
+    &HELP
+}
+
+/// F1, the key help's key.
+const VK_F1: i32 = 0x70;
+
+/// The key was pressed since the last call, with one of our windows in front.
+/// A press shorter than a frame counts too (the state's low bit: at 15 frames
+/// a second a tap fell between two calls, and F3 did nothing).
+fn pressed(key: i32, was: &AtomicBool) -> bool {
     // SAFETY: a plain query.
-    let down = unsafe { GetAsyncKeyState(i32::from(VK_F3)) } < 0;
-    if DOWN.swap(down, Ordering::Relaxed) || !down {
+    let state = unsafe { GetAsyncKeyState(key) };
+    let down = state < 0 || state & 1 != 0;
+    if was.swap(down, Ordering::Relaxed) || !down {
         return false;
     }
     let mut process = 0;
@@ -647,6 +658,39 @@ fn paint_hud(s: &Snapshot) -> Canvas {
     c
 }
 
+/// The key help (F1): which key each of the pad's buttons is on, as the
+/// title only ever shows the pad's. Letters by their place on an AZERTY
+/// keyboard (`victory-hle`'s `keymap` goes by the keys' places).
+const HELP: [(&str, &str); 14] = [
+    ("A", "ENTREE"),
+    ("B", "RETOUR ARRIERE"),
+    ("X / Y", "X / Y"),
+    ("LB / RB", "A / E"),
+    ("LT VISER", "CLIC DROIT / MAJ GAUCHE"),
+    ("RT TIRER", "CLIC GAUCHE / ESPACE"),
+    ("STICK G", "Z Q S D"),
+    ("STICK D", "SOURIS / I J K L"),
+    ("L3 / R3", "F / H"),
+    ("CROIX", "FLECHES"),
+    ("MENU", "ECHAP"),
+    ("VUE", "TAB"),
+    ("SOURIS", "CLIC PRENDRE - F9 RENDRE"),
+    ("PANNEAU", "F3"),
+];
+
+fn paint_help() -> Canvas {
+    let mut c = Canvas::new(BASE_W, BASE_H, BG);
+    c.border(0, 0, BASE_W, BASE_H, BORDER);
+    c.text(14, 12, 3, YELLOW, "TOUCHES");
+    c.text(BASE_W - 14 - 15 * 12, 18, 2, MUTED, "F1 POUR FERMER");
+    for (i, (button, key)) in HELP.iter().enumerate() {
+        let y = 46 + i as u32 * 20;
+        c.text(14, y, 2, LABEL, button);
+        c.text(150, y, 2, WHITE, key);
+    }
+    c
+}
+
 /// The buffers of a box that size and format.
 struct Buffers {
     format: DXGI_FORMAT,
@@ -699,7 +743,8 @@ impl Buffers {
 
     fn write(&mut self, snap: &Snapshot, completed: u64) -> Option<usize> {
         let slot = free_upload(&self.upload_fences, self.turn, completed)?;
-        let picture = paint_hud(snap).pack(self.scale, self.format, self.pitch as usize);
+        let canvas = if help().load(Ordering::Relaxed) { paint_help() } else { paint_hud(snap) };
+        let picture = canvas.pack(self.scale, self.format, self.pitch as usize);
         self.turn = slot;
         // SAFETY: the mapping holds the picture and its previous GPU read has finished.
         unsafe { std::ptr::copy_nonoverlapping(picture.as_ptr(), self.uploads[slot].1, picture.len()) };
@@ -757,10 +802,17 @@ impl Panel {
     /// A frame was presented; `line`: the counters go back to 0 right behind
     /// this call. (Not shown it asks for the key's state and no more.)
     pub(super) fn frame(&mut self, line: bool) {
-        if pressed() {
+        static F3_DOWN: AtomicBool = AtomicBool::new(false);
+        static F1_DOWN: AtomicBool = AtomicBool::new(false);
+        if pressed(i32::from(VK_F3), &F3_DOWN) {
             shown().fetch_xor(true, Ordering::Relaxed);
+            self.changed = true;
         }
-        if !shown().load(Ordering::Relaxed) {
+        if pressed(VK_F1, &F1_DOWN) {
+            help().fetch_xor(true, Ordering::Relaxed);
+            self.changed = true;
+        }
+        if !shown().load(Ordering::Relaxed) && !help().load(Ordering::Relaxed) {
             self.frames = 0;
             return;
         }
@@ -869,7 +921,7 @@ impl Panel {
         format: DXGI_FORMAT,
     ) -> Option<PanelCopy> {
         self.last_size = (width, height);
-        if !shown().load(Ordering::Relaxed) || self.failed {
+        if !(shown().load(Ordering::Relaxed) || help().load(Ordering::Relaxed)) || self.failed {
             return None;
         }
         let snap = self.snap.as_ref()?;

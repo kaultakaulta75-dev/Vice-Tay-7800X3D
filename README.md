@@ -52,6 +52,8 @@ Le profil 8 cœurs est celui de Vice-Tay (`-Machine 4070`), aussi utilisé par
 | Croix directionnelle | flèches |
 | Menu / Vue | Échap / Tab |
 | Rendre la souris à Windows | F9 |
+| Aide des touches à l'écran | F1 |
+| Panneau de performances | F3 |
 
 Une manette branchée reste prioritaire. `VICTORY_MOUSE=<facteur>` règle la
 sensibilité (1 par défaut), `VICTORY_KEYBOARD=qwerty|azerty|qwertz` force une
