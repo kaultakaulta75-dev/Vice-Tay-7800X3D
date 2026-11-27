@@ -18,6 +18,10 @@ Fork de [Vice-Tay](https://github.com/TaynanGT/Vice-Tay) (couche de compatibilit
   shaders ne se traduisaient pas et leurs draws étaient abandonnés (têtes
   invisibles, visages mal rendus). Ici la liste suffit, et `VICTORY_WAVE_WIDE=0`
   la coupe toujours. Un cinquième shader (`a10179ab7eda0dc3`) y est ajouté.
+- **Clavier et souris** (repris d'[AnyXboxX](https://github.com/LooperSalty/AnyXboxX)) :
+  cliquez sur l'image pour diriger la caméra à la souris (F9 la rend), clic droit pour
+  viser, clic gauche pour tirer. Les touches suivent leur place physique, donc ZQSD
+  marche sur un clavier AZERTY. Voir « Commandes » plus bas.
 - **`scripts\fps-report.ps1`** : résume les fps d'une session à partir du log
   (`-More @{VICTORY_LOG_FILE='...'}`), pour comparer deux réglages.
 
@@ -33,6 +37,25 @@ scripts\play.ps1 -Exe <votre game_scarlett_master.exe> -Console series-s -Build 
 
 Le profil 8 cœurs est celui de Vice-Tay (`-Machine 4070`), aussi utilisé par
 [AnyXboxX](https://github.com/LooperSalty/AnyXboxX).
+
+## Commandes (sans manette)
+
+| Action | Touche (place physique, AZERTY) |
+|---|---|
+| Se déplacer | Z Q S D |
+| Caméra | souris (après un clic sur l'image), ou I J K L |
+| Viser / tirer | clic droit / clic gauche, ou W / C |
+| Accélérer / freiner (véhicule) | Espace / Maj gauche |
+| A / B / X / Y | Entrée / Retour arrière / X / Y |
+| Gâchettes hautes | A / E |
+| Clic des sticks | F / H |
+| Croix directionnelle | flèches |
+| Menu / Vue | Échap / Tab |
+| Rendre la souris à Windows | F9 |
+
+Une manette branchée reste prioritaire. `VICTORY_MOUSE=<facteur>` règle la
+sensibilité (1 par défaut), `VICTORY_KEYBOARD=qwerty|azerty|qwertz` force une
+disposition.
 
 ## Limites connues
 

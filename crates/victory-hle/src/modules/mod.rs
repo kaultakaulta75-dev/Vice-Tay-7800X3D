@@ -20,10 +20,12 @@ pub mod dstorage;
 pub mod files;
 pub mod gameinput;
 pub mod kernel;
+pub mod keymap;
 #[cfg(windows)]
 pub mod lifecycle;
 #[cfg(windows)]
 pub mod media;
+pub mod mouse;
 #[cfg(windows)]
 pub mod net;
 pub mod rpcrt4;
