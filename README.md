@@ -31,9 +31,13 @@ Fork de [Vice-Tay](https://github.com/TaynanGT/Vice-Tay) (couche de compatibilit
 git clone https://github.com/kaultakaulta75-dev/Vice-Tay-7800X3D.git
 cd Vice-Tay-7800X3D
 copy victory.example.toml victory.toml      # puis indiquez vos chemins, hors de ce dossier
-cargo build --release --locked -p victory
-scripts\play.ps1 -Exe <votre game_scarlett_master.exe> -Console series-s -Build release
+cargo build --locked --profile diag -p victory --features diagnostics
+scripts\play.ps1 -Exe <votre game_scarlett_master.exe> -Console series-s
 ```
+
+Cette version « diag » contient le panneau de performances (F3) et l'aide des touches (F1).
+Pour quelques images par seconde de plus, sans panneau ni aide : `cargo build --release --locked -p victory`,
+puis `-Build release`.
 
 Le profil 8 cœurs est celui de Vice-Tay (`-Machine 4070`), aussi utilisé par
 [AnyXboxX](https://github.com/LooperSalty/AnyXboxX).
