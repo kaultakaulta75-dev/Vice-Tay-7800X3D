@@ -1,3 +1,49 @@
+# Vice-Tay — profil 7800X3D
+
+Fork de [Vice-Tay](https://github.com/TaynanGT/Vice-Tay) (couche de compatibilité
+[VIctory](https://github.com/Marvisak/VIctory)), basé sur la version `146c9e0`,
+réglé et mesuré sur un Ryzen 7 7800X3D + RTX 4080 + 32 Go de RAM.
+
+**Aucun fichier du jeu n'est inclus.** Il faut votre propre copie.
+
+## Ce que ce fork change
+
+- **Profil `-Machine 7800x3d`**, choisi automatiquement avec une carte NVIDIA et
+  un processeur de 16 threads ou moins. Le profil d'origine (fait pour un 16 cœurs)
+  lançait plus de threads de travail que le CPU n'en a. Mesuré en Series S 1080p :
+  **15,5 → 21,9 fps** médian dans le monde, pire 10 % 13,5 → 18,3.
+- **`VICTORY_WAVE_WIDE_ONLY` implémenté.** La liste était définie par `play.ps1`
+  mais lue nulle part : deux shaders ne se traduisaient pas et leurs draws étaient
+  abandonnés (têtes invisibles, visages mal rendus). Un cinquième shader
+  (`a10179ab7eda0dc3`) est ajouté à la liste.
+- **`scripts\fps-report.ps1`** : résume les fps d'une session à partir du log
+  (`-More @{VICTORY_LOG_FILE='...'}`), pour comparer deux réglages.
+
+## Jouer
+
+```powershell
+git clone https://github.com/kaultakaulta75-dev/Vice-Tay-7800X3D.git
+cd Vice-Tay-7800X3D
+copy victory.example.toml victory.toml      # puis indiquez vos chemins, hors de ce dossier
+cargo build --release --locked -p victory
+scripts\play.ps1 -Exe <votre game_scarlett_master.exe> -Console series-s -Build release
+```
+
+Le profil 8 cœurs reprend les réglages du profil `-Machine 4070`
+d'[AnyXboxX](https://github.com/LooperSalty/AnyXboxX).
+
+## Limites connues
+
+Reflets de l'eau par blocs, quelques taches de couleur sur les visages, zones
+d'ombre trop sombres sans `-RayTracing` (qui coûte environ 5 fps). Ne réduisez pas
+`VICTORY_OUTPUT` en Series S : l'upscaler du jeu n'y accepte que 1920×1080.
+
+Licence GPL-3.0-or-later, comme VIctory.
+
+---
+
+*Ci-dessous, le README d'origine de Vice-Tay (en anglais).*
+
 # Vice-Tay
 
 Vice-Tay runs an Xbox Series title natively on Windows, from files you supply,
