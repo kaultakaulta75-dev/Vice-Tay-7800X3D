@@ -38,6 +38,11 @@ Fork de [Vice-Tay](https://github.com/TaynanGT/Vice-Tay) (couche de compatibilit
     taille du fichier. Chez eux le fichier avait atteint 4,1 Go.
   - **Deux corrections de shaders** (ScarlettPort/DexNom) : masque wave64 copié mot
     par mot après un spill ; échantillonneur immédiat choisi par un phi.
+- **Moins de RAM par défaut** (profil 7800X3D) : lecture directe des fichiers
+  (`VICTORY_DSTORAGE_IO=direct`), buffers du titre sur place (`VICTORY_INPLACE=2`), fenêtres
+  sur 64 Ko (`VICTORY_WINDOW_KB=64`, `VICTORY_WINDOW_TAILS=1`), d'après le profil laptop de
+  l'amont. Mesuré en Series X 2160p : RAM 28,8 → 26,4 Go, 19 → 21 fps. Les fenêtres en VRAM
+  par ReBAR (`VICTORY_WINDOWS_BAR_MB`) coûtent 11 ms de GPU ici, non activées.
 - **Soleil noir corrigé** : la garde NaN (`VICTORY_NAN_GUARD`) ne traite plus que les
   vrais NaN du GPU (0x7FC00000) et les infinis sur les sorties couleur. Le jeu emballe le
   ciel en R9G9B9E5 dans des cibles entières via des sorties flottantes ; les bits du

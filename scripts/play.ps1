@@ -78,6 +78,15 @@ if ($Machine -eq '4070') {
         $settings.VICTORY_CARD_BUFFERS_MIN_KB = '64'; $settings.VICTORY_CARD_BUFFERS_MB = '1536'
         $settings.VICTORY_CARD_WINDOWS_MB = '1024'
     }
+    # Moins de RAM, d'après le profil « laptop 16 Go » de l'amont (TaynanGT/Vice-Tay,
+    # docs/laptop-16gb.md), mesuré ici le 2026-11-27 sur 7800X3D / RTX 4080 / 32 Go, Series X
+    # 2160p, même scène : RAM 28,8 -> 26,4 Go, SUB 47,8 -> 44,2 ms, GPU inchangé, 19 -> 21 fps.
+    # Fichiers lus sans le cache Windows, buffers du titre utilisés sur place, fenêtres
+    # découpées sur 64 Ko avec leurs queues. Pas VICTORY_WINDOWS_BAR_MB (fenêtres en VRAM par
+    # le ReBAR : GPU 37 -> 49 ms, 16 fps) ni VICTORY_LEVELS_ON_DEMAND (textures 2,5 -> 9,2 Go,
+    # VRAM pleine). Sous -Safe aussi : rien d'expérimental.
+    $settings.VICTORY_DSTORAGE_IO = 'direct'; $settings.VICTORY_INPLACE = '2'
+    $settings.VICTORY_WINDOW_KB = '64'; $settings.VICTORY_WINDOW_TAILS = '1'
 }
 # -Safe leaves out every way still on trial, and the newest faster ones.
 if ($Safe) {
