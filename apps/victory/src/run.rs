@@ -216,6 +216,12 @@ pub fn run(
             None => println!("frame rate: our clock {ms} ms; the title's own rate (30) left as it is"),
         }
     }
+    // A ceiling on the working set (VICTORY_WORKING_SET_MB, off without it),
+    // before the title touches its memory (TaynanGT/Vice-Tay, docs/laptop-16gb.md).
+    #[cfg(windows)]
+    if execute {
+        victory_loader::working_set::apply_asked();
+    }
     // The output size and render scale (VICTORY_OUTPUT, VICTORY_RENDER_SCALE,
     // VICTORY_UPSCALER; each off without it).
     #[cfg(windows)]
