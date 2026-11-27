@@ -172,6 +172,21 @@ fn merged(a: PadState, b: PadState) -> PadState {
     }
 }
 
+/// Whether the keyboard and the mouse drive the stand-in pad (on by default;
+/// `VICTORY_PAD_KEYS=0`: the pad stays connected but idle, and the keys reach
+/// the title only as the keyboard device it asks for, so a title that reads
+/// the keyboard itself shows its own keyboard controls and prompts).
+fn keys_drive_pad() -> bool {
+    static ON: LazyLock<bool> =
+        LazyLock::new(|| std::env::var_os("VICTORY_PAD_KEYS").is_none_or(|v| v != "0"));
+    *ON
+}
+
+/// The stand-in pad: from the keys and the mouse unless `VICTORY_PAD_KEYS=0`.
+fn stand_in(keys: &[KeyState], mouse: Mouse) -> PadState {
+    if keys_drive_pad() { fallback(keys, mouse) } else { PadState::default() }
+}
+
 /// Whether the title sees one pad that is always there, fed by the keyboard
 /// and by every host pad (on by default; `VICTORY_ONE_PAD=0` shows each host
 /// pad as a device of its own, and the stand-in only while there is none).
@@ -506,7 +521,7 @@ impl State {
         let now = now();
         let mut events = std::mem::take(&mut self.pending);
         if one_pad {
-            let pad = pads.into_iter().flatten().fold(fallback(&keys, mouse), merged);
+            let pad = pads.into_iter().flatten().fold(stand_in(&keys, mouse), merged);
             self.update(devices, FALLBACK, Some(Value::Pad(pad)), now, &mut events);
             self.update(devices, KEYBOARD, Some(Value::Keys(keys)), now, &mut events);
             return events;
@@ -515,7 +530,7 @@ impl State {
         for (slot, pad) in pads.into_iter().enumerate() {
             self.update(devices, slot, pad.map(Value::Pad), now, &mut events);
         }
-        let fallback = (!any_pad).then(|| Value::Pad(fallback(&keys, mouse)));
+        let fallback = (!any_pad).then(|| Value::Pad(stand_in(&keys, mouse)));
         self.update(devices, FALLBACK, fallback, now, &mut events);
         self.update(devices, KEYBOARD, Some(Value::Keys(keys)), now, &mut events);
         events
