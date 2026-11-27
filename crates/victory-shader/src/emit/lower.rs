@@ -4566,22 +4566,34 @@ impl<'a> Lower<'a> {
         self.s.m.cast(c, Cast::Trunc, hi, self.s.t.i32)
     }
 
-    fn nan_guard_enabled() -> bool {
-        static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-        *ON.get_or_init(|| std::env::var_os("VICTORY_NAN_GUARD").is_none_or(|v| v != "0"))
+    /// `VICTORY_NAN_GUARD`: `0` off; `strict` every NaN pattern on colour exports; unset
+    /// or anything else, only the NaNs the GPU makes ([`Self::nan_guard`]).
+    fn nan_guard_mode() -> u8 {
+        static MODE: std::sync::OnceLock<u8> = std::sync::OnceLock::new();
+        *MODE.get_or_init(|| match std::env::var("VICTORY_NAN_GUARD").ok().as_deref().map(str::trim) {
+            Some("0") => 0,
+            Some("strict") => 2,
+            _ => 1,
+        })
     }
 
     /// `VICTORY_NAN_GUARD` (on unless `0`): a float a pixel program exports to a colour
     /// target, or a store writes to a typed image or buffer, with NaN made 0 and an infinity
     /// ±65504, so one bad pixel does not stay in a history the title blends into each frame.
-    /// `strict` (float targets): every NaN. Otherwise only the NaNs the GPU makes (0x7FC00000,
-    /// either sign) and infinities: a typed store may carry an integer's bits, and all-ones or
-    /// other NaN patterns are common integers.
+    /// Only the NaNs the GPU makes (0x7FC00000, either sign) and infinities count: a typed
+    /// store, and a colour export too, may carry an integer's bits. The title packs the sky's
+    /// light as R9G9B9E5 into R32_UINT targets through float exports; the sun's packed value
+    /// (exponent 31, a bright blue) has the bits of a NaN, and `strict` (every NaN pattern,
+    /// `VICTORY_NAN_GUARD=strict`, the old default) made it 0: a black sun with ragged edges
+    /// (Vice-Tay-7800X3D, 2026-11-27). `strict` is asked for float targets only, and applies
+    /// only in that mode.
     // shortcut: raw buffer stores are left as they are (no type to go by).
     fn nan_guard(&mut self, f: V, strict: bool) -> V {
-        if !Self::nan_guard_enabled() {
-            return f;
-        }
+        let strict = match Self::nan_guard_mode() {
+            0 => return f,
+            2 => strict,
+            _ => false,
+        };
         let c = self.cur;
         let bits = self.as_int(f);
         let mag = self.s.m.i32(0x7FFF_FFFF);
@@ -12830,7 +12842,7 @@ impl<'a> Lower<'a> {
             let regs = if d16 { count.div_ceil(2) } else { count };
             let mut vals =
                 self.vgprs(inst, data.as_ref().ok_or("buffer store data")?, regs as u8)?;
-            let integer = if typed && (d16 || Self::nan_guard_enabled()) {
+            let integer = if typed && (d16 || Self::nan_guard_mode() != 0) {
                 self.integer_view(src)?
             } else {
                 None

@@ -38,6 +38,11 @@ Fork de [Vice-Tay](https://github.com/TaynanGT/Vice-Tay) (couche de compatibilit
     taille du fichier. Chez eux le fichier avait atteint 4,1 Go.
   - **Deux corrections de shaders** (ScarlettPort/DexNom) : masque wave64 copié mot
     par mot après un spill ; échantillonneur immédiat choisi par un phi.
+- **Soleil noir corrigé** : la garde NaN (`VICTORY_NAN_GUARD`) ne traite plus que les
+  vrais NaN du GPU (0x7FC00000) et les infinis sur les sorties couleur. Le jeu emballe le
+  ciel en R9G9B9E5 dans des cibles entières via des sorties flottantes ; les bits du
+  soleil ressemblaient à un NaN et étaient mis à 0 (disque noir aux bords déchiquetés).
+  `VICTORY_NAN_GUARD=strict` rend l'ancien comportement, `0` la coupe.
   - Non repris : la répartition sur deux dies (un seul sur le 7800X3D), la remise
     des descripteurs par lots (ce fork a déjà 16 files par thread), la netteté FSR
     (dépend de leur module de redirection vers la DLL FSR PC, absent ici).
