@@ -1686,6 +1686,26 @@ impl Staging {
                 return;
             }
         }
+        // A texture pack, or the textures written out (`crate::texdump`; off).
+        if crate::texdump::on() && held == u32::MAX && self.layout.slices == 1 {
+            let levels: Vec<crate::texdump::Level> = self
+                .footprints
+                .iter()
+                .zip(&self.rows)
+                .map(|(f, &rows)| crate::texdump::Level {
+                    format: f.Footprint.Format.0 as u32,
+                    width: f.Footprint.Width,
+                    height: f.Footprint.Height,
+                    depth: f.Footprint.Depth,
+                    pitch: f.Footprint.RowPitch as usize,
+                    rows: rows as usize,
+                    offset: f.Offset as usize,
+                })
+                .collect();
+            // SAFETY: the mapped staging buffer, `bytes` long from `data`.
+            let data = unsafe { std::slice::from_raw_parts_mut(self.data, self.bytes as usize) };
+            crate::texdump::detiled(tiled, &levels, data);
+        }
     }
 }
 

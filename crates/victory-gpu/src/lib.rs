@@ -20,6 +20,8 @@ mod ambient;
 #[cfg(windows)]
 mod lightprobe;
 #[cfg(windows)]
+mod texdump;
+#[cfg(windows)]
 mod texlate;
 #[cfg(windows)]
 mod texstore;
